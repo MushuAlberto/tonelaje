@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
+import plotly.graph_objects as go
 from datetime import datetime
 
 # Configuración de la página
@@ -72,14 +72,39 @@ if uploaded_file is not None:
         # Agrupar datos
         df_grouped = df_filtrado.groupby(['FECHA', 'EMPRESA DE TRANSPORTE'])['TONELAJE'].sum().reset_index()
 
-        # Crear gráfico
-        fig = px.bar(df_grouped,
-                    x='FECHA',
-                    y='TONELAJE',
-                    color='EMPRESA DE TRANSPORTE',
-                    title='Sumatoria Diaria de Tonelaje por Empresa (Producto SLIT)',
-                    labels={'TONELAJE': 'Tonelaje (ton)', 'FECHA': 'Fecha'},
-                    height=600)
+        # Valor programado fijo
+        tonelaje_programado = 1197
+
+        # Crear gráfico con barras reales y línea de tonelaje programado
+        fig = go.Figure()
+
+        # Añadir barras por empresa
+        for empresa in df_grouped['EMPRESA DE TRANSPORTE'].unique():
+            df_emp = df_grouped[df_grouped['EMPRESA DE TRANSPORTE'] == empresa]
+            fig.add_trace(go.Bar(
+                x=df_emp['FECHA'],
+                y=df_emp['TONELAJE'],
+                name=f'Real - {empresa}'
+            ))
+
+        # Añadir línea de tonelaje programado
+        fechas_sorted = sorted(df_grouped['FECHA'].unique())
+        fig.add_trace(go.Scatter(
+            x=fechas_sorted,
+            y=[tonelaje_programado] * len(fechas_sorted),
+            mode='lines',
+            name='Tonelaje Programado (1197)',
+            line=dict(color='red', dash='dash')
+        ))
+
+        # Configurar layout
+        fig.update_layout(
+            title='Sumatoria Diaria de Tonelaje por Empresa (Producto SLIT) vs Tonelaje Programado',
+            xaxis_title='Fecha',
+            yaxis_title='Tonelaje (ton)',
+            barmode='group',
+            height=600
+        )
 
         # Mostrar gráfico
         st.plotly_chart(fig, use_container_width=True)
