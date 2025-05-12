@@ -56,8 +56,21 @@ if uploaded_file is not None:
         # Convertir fecha
         df_slit['FECHA'] = pd.to_datetime(df_slit['FECHA'], dayfirst=True)
 
+        # Filtros
+        empresas_unicas = df_slit['EMPRESA DE TRANSPORTE'].unique().tolist()
+        empresas_seleccionadas = st.multiselect("Selecciona Empresas", empresas_unicas, default=empresas_unicas)
+
+        fechas_unicas = df_slit['FECHA'].dt.date.unique().tolist()
+        fechas_seleccionadas = st.multiselect("Selecciona Fechas", fechas_unicas, default=fechas_unicas)
+
+        # Filtrar DataFrame
+        df_filtrado = df_slit[
+            (df_slit['EMPRESA DE TRANSPORTE'].isin(empresas_seleccionadas)) &
+            (df_slit['FECHA'].dt.date.isin(fechas_seleccionadas))
+        ]
+
         # Agrupar datos
-        df_grouped = df_slit.groupby(['FECHA', 'EMPRESA DE TRANSPORTE'])['TONELAJE'].sum().reset_index()
+        df_grouped = df_filtrado.groupby(['FECHA', 'EMPRESA DE TRANSPORTE'])['TONELAJE'].sum().reset_index()
 
         # Crear gráfico
         fig = px.bar(df_grouped,
